@@ -1,0 +1,1081 @@
+<html><head>
+    <title>$life</title>
+    <link rel="icon" href="pfp.png" type="image/x-icon">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        background-color: #000;
+        background-image: radial-gradient(circle at center, #001a1a, #000);
+        color: #0f0;
+        font-family: 'Courier New', monospace;
+    }
+    
+    #canvas {
+        width: 100vw;
+        height: 100vh;
+        filter: blur(1px);
+        cursor: pointer;
+    }
+    
+    #console {
+        position: absolute;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
+        max-width: 800px;
+        background: rgba(0,20,20,0.9);
+        border: 2px solid #0f0;
+        box-shadow: 0 0 20px rgba(0,255,0,0.2);
+        border-radius: 10px;
+        padding: 10px;
+        font-family: 'Courier New', monospace;
+        color: #0f0;
+        backdrop-filter: blur(5px);
+    }
+    
+    #consoleOutput {
+        height: 150px;
+        overflow-y: auto;
+        margin-bottom: 10px;
+        padding: 10px;
+        border: 1px solid #0f0;
+        font-size: 14px;
+    }
+    
+    #consoleInput {
+        width: 100%;
+        background: rgba(0,20,20,0.5);
+        border: 1px solid #0f0;
+        color: #0f0;
+        padding: 8px;
+        font-family: inherit;
+        font-size: 14px;
+    }
+    
+    .glyph {
+        position: absolute;
+        color: #0f0;
+        opacity: 0.3;
+        font-size: 16px;
+        pointer-events: none;
+        user-select: none;
+    }
+    
+    .life-cell {
+        position: absolute; 
+        border: 1px solid rgba(0, 255, 0, 0.5);
+        transition: all 0.3s ease;
+    }
+    
+    @keyframes cell-seed {
+        0% { transform: scale(0); opacity: 0; }
+        50% { transform: scale(1.2); opacity: 1; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    
+    .seeded-cell {
+        animation: cell-seed 0.5s ease-out forwards;
+    }
+    
+    .life-cell.immortal {
+        box-shadow: 0 0 10px #fff, 0 0 20px #0f0;
+        border: 2px solid #fff;
+        z-index: 2;
+    }
+    
+    @keyframes cell-pulse {
+        0% { background: rgba(0, 255, 0, 0.3); }
+        50% { background: rgba(0, 255, 0, 0.6); }
+        100% { background: rgba(0, 255, 0, 0.3); }
+    }
+    
+    .resonating-cell {
+        animation: cell-pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { opacity: 0.3; transform: scale(1); }
+        50% { opacity: 0.6; transform: scale(1.2); }
+        100% { opacity: 0.3; transform: scale(1); }
+    }
+    
+    @keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+        100% { transform: translateY(0px); }
+    }
+    
+    .focus-overlay {
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(circle at center, transparent 20%, rgba(0,0,0,0.8) 100%);
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 2s;
+    }
+    
+    .dada-text {
+        position: absolute;
+        font-family: 'Courier New', monospace;
+        color: #0f0;
+        mix-blend-mode: difference;
+        pointer-events: none;
+        opacity: 0;
+        transition: all 1s ease-out;
+    }
+    
+    .wisdom-star {
+        position: absolute;
+        color: white;
+        font-size: 14px;
+        opacity: 0;
+        transition: opacity 1s;
+        pointer-events: none;
+        animation: starPulse 2s infinite ease-in-out;
+    }
+    
+    @keyframes starPulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+        100% { transform: scale(1); }
+    }
+    
+    .chakra-point {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: radial-gradient(circle at center, #fff, transparent);
+        filter: blur(2px);
+        animation: chakra-pulse 2s infinite;
+    }
+    
+    @keyframes chakra-pulse {
+        0% { transform: scale(1); opacity: 0.5; }
+        50% { transform: scale(1.5); opacity: 1; }
+        100% { transform: scale(1); opacity: 0.5; }
+    }
+    
+    @keyframes transcend {
+        0% { filter: hue-rotate(0deg) saturate(1); }
+        50% { filter: hue-rotate(180deg) saturate(2); }
+    }
+    
+    @keyframes ripple {
+        0% { 
+            transform: scale(0.3);
+            opacity: 1;
+        }
+        100% { 
+            transform: scale(3);
+            opacity: 0;
+        }
+    }
+    
+    .pinned-poem {
+        text-shadow: 0 0 10px rgba(0,255,0,0.5);
+        z-index: 100;
+        user-select: none;
+    }
+    
+    @font-face {
+        font-family: 'Alien';
+        src: url('https://fonts.cdnfonts.com/css/alien-encounters') format('woff2');
+    }
+    
+    .dada-active {
+        font-family: 'Alien', 'Courier New', monospace !important;
+    }
+    
+    @media (max-width: 768px) {
+        .life-cell {
+            font-size: 12px;
+        }
+        
+        .dada-text {
+            font-size: 12px;
+        }
+        
+        .pinned-poem {
+            font-size: 12px;
+        }
+        
+        .wisdom-star {
+            font-size: 12px;
+        }
+    }
+    </style>
+    </head><body>
+    
+    <div class="focus-overlay" id="focusOverlay"></div>
+    <canvas id="canvas"></canvas>
+    <div id="console">
+        <div id="consoleOutput"></div>
+        <input type="text" id="consoleInput" placeholder="Enter command (try 'help', 'focus'(recommended), or 'dada')" autocomplete="off">
+    </div>
+    
+    <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const consoleOutput = document.getElementById('consoleOutput');
+    const consoleInput = document.getElementById('consoleInput');
+    
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    let triangles = [];
+    let harmonics = [];
+    let glyphs = [];
+    let consciousness = 0;
+    let emergenceLevel = 0;
+    let secretFound = false;
+    let focusMode = false;
+    let dadaMode = false;
+    let lifeGrid = [];
+    let cellSize = 20;
+    let gridWidth = Math.floor(window.innerWidth / cellSize);
+    let gridHeight = Math.floor(window.innerHeight / cellSize);
+    let lifePaused = false;
+    let mouseDown = false;
+    let pinnedPoems = [];
+    
+    const wisdomQuotes = [
+        "Until you make the unconscious conscious, it will direct your life and you will call it fate. - C.G. Jung",
+        "Who looks outside, dreams; who looks inside, awakes. - C.G. Jung",
+        "The meeting of two personalities is like the contact of two chemical substances: if there is any reaction, both are transformed. - C.G. Jung",
+        "You are the universe experiencing itself. - Alan Watts",
+        "We are all just walking each other home. - Alan Watts",
+        "The only way to make sense out of change is to plunge into it, move with it, and join the dance. - Alan Watts",
+        "The way that can be spoken is not the eternal way",
+        "What the caterpillar calls the end, the rest of the world calls a butterfly",
+        "Before enlightenment: chop wood, carry water. After enlightenment: chop wood, carry water",
+        "The answer to life, the universe and everything is rarely the answer",
+        "In the space between chaos and shape there was another chance. - Jeanette Winterson",
+        "Reality is not what it appears to be - Carlo Rovelli"
+    ];
+    
+    const dadaWords = [
+        "zeitgeist", "flux", "chaos", "dream", "prism", "void", "echo", 
+        "quantum", "nebula", "cosmic", "azure", "zenith", "nova",
+        "ethereal", "sublime", "ephemeral", "luminous", "eternal", "infinite",
+        "crystalline", "astral", "celestial", "prismatic", "ethereal", "phantasm"
+    ];
+    
+    const dadaPoetry = [
+        "quantum dreams in cosmic streams",
+        "alchemical fire transmutes desire",
+        "sacred geometry dances eternal",
+        "as above so below reflects", 
+        "universal mind in divine design",
+        "hermetic wisdom flows through time",
+        "consciousness spirals outward in",
+        "sacred symbols speak in silence",
+        "divine proportion golden mean",
+        "merkaba light in sacred flight"
+    ];
+    
+    const poetryColors = [
+        ['#ff77ff', '#00ffff'],  
+        ['#ffd700', '#ff4500'],  
+        ['#00ff99', '#4169e1'],  
+        ['#9400d3', '#00ffff'],  
+        ['#32cd32', '#ff69b4']   
+    ];
+    
+    const chakraPoints = [];
+    
+    const symbols = ['Ω', '∞', '∆', '◊', '○', '□', '△', '☆', '※', '♢', '☿', '♄', '♃', '♀', '☽', '☉', '♂', '⚕', '☤', '∴', '∵', '☯', '☘', '☮', '⚛'];
+    
+    function createGlyph() {
+        const glyph = document.createElement('div');
+        glyph.className = 'glyph';
+        glyph.style.left = Math.random() * window.innerWidth + 'px';
+        glyph.style.top = Math.random() * window.innerHeight + 'px';
+        glyph.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+        glyph.style.animation = `pulse 3s infinite, float ${5 + Math.random() * 5}s infinite`;
+        document.body.appendChild(glyph);
+        glyphs.push(glyph);
+    }
+    
+    function writeToConsole(text, color = '#0f0') {
+        const line = document.createElement('div');
+        line.style.color = color;
+        line.textContent = text;
+        consoleOutput.appendChild(line);
+        consoleOutput.scrollTop = consoleOutput.scrollHeight;
+    }
+    
+    function adjustCellSize() {
+        if (window.innerWidth < 768) {
+            cellSize = 15;
+        } else {
+            cellSize = 20;
+        }
+        gridWidth = Math.floor(window.innerWidth / cellSize);
+        gridHeight = Math.floor(window.innerHeight / cellSize);
+    }
+    
+    function initializeLife() {
+        lifeGrid = Array(gridHeight).fill().map(() => 
+            Array(gridWidth).fill().map(() => ({
+                alive: Math.random() < 0.1,
+                age: 0,
+                immortal: false 
+            }))
+        );
+        renderLife();
+    }
+    
+    function renderLife() {
+        document.querySelectorAll('.life-cell').forEach(cell => cell.remove());
+    
+        const goldenRatio = 1.618033988749895;
+        const phi = (1 + Math.sqrt(5)) / 2;
+    
+        for(let y = 0; y < gridHeight; y++) {
+            for(let x = 0; x < gridWidth; x++) {
+                if(lifeGrid[y][x].alive) {
+                    const cell = document.createElement('div');
+                    if(lifeGrid[y][x].immortal) {
+                        cell.classList.add('immortal');
+                    }
+                    cell.className = 'life-cell';
+                    cell.style.width = `${cellSize-2}px`;
+                    cell.style.height = `${cellSize-2}px`;
+                    cell.style.left = `${x * cellSize}px`;
+                    cell.style.top = `${y * cellSize}px`;
+                    
+                    const baseHue = lifeGrid[y][x].baseHue || (Math.random() * 360);
+                    const age = lifeGrid[y][x].age;
+    
+                    let hue = (baseHue + (age * phi / 10)) % 360;
+                    let saturation = Math.min(100, 50 + (age / (goldenRatio * 5)));
+                    let lightness = Math.max(30, 60 - (age / (phi * 5)));
+                    
+                    cell.style.background = `hsla(${hue}, ${saturation}%, ${lightness}%, 0.6)`;
+                    cell.style.transition = 'background 0.5s ease';
+    
+                    if(lifeGrid[y][x].symbol) {
+                        const symbolSpan = document.createElement('span');
+                        symbolSpan.textContent = lifeGrid[y][x].symbol;
+                        symbolSpan.style.position = 'absolute';
+                        symbolSpan.style.top = '50%';
+                        symbolSpan.style.left = '50%';
+                        symbolSpan.style.transform = 'translate(-50%, -50%)';
+                        symbolSpan.style.color = `hsla(${(baseHue + 180) % 360}, 70%, 50%, 0.8)`;
+                        symbolSpan.style.fontSize = '10px';
+                        cell.appendChild(symbolSpan);
+                    }
+    
+                    if(consciousness > 1.0 && harmonics.length > 0) {
+                        cell.classList.add('resonating-cell');
+                    }
+                    
+                    document.body.appendChild(cell);
+                }
+            }
+        }
+    }
+    
+    function updateLife() {
+        if(lifePaused || !lifeGrid || lifeGrid.length === 0) return;
+        
+        const newGrid = Array(gridHeight).fill().map(() => 
+            Array(gridWidth).fill().map(() => ({
+                alive: false,
+                age: 0,
+                immortal: false
+            }))
+        );
+        
+        for(let y = 0; y < gridHeight; y++) {
+            for(let x = 0; x < gridWidth; x++) {
+                newGrid[y][x].immortal = lifeGrid[y][x].immortal;
+                
+                if (lifeGrid[y][x].immortal) {
+                    newGrid[y][x].alive = lifeGrid[y][x].alive;
+                    newGrid[y][x].age = lifeGrid[y][x].age + 1;
+                    continue;
+                }
+                
+                const neighbors = countNeighbors(x, y);
+                if(lifeGrid[y][x].alive) {
+                    newGrid[y][x].alive = neighbors === 2 || neighbors === 3;
+                    if(newGrid[y][x].alive) {
+                        newGrid[y][x].age = lifeGrid[y][x].age + 1;
+                    }
+                } else {
+                    newGrid[y][x].alive = neighbors === 3;
+                }
+            }
+        }
+        
+        lifeGrid = newGrid;
+        renderLife();
+    }
+    
+    function countNeighbors(x, y) {
+        if (!lifeGrid || !lifeGrid[y]) return 0;
+    
+        let count = 0;
+        for(let dy = -1; dy <= 1; dy++) {
+            for(let dx = -1; dx <= 1; dx++) {
+                if(dx === 0 && dy === 0) continue;
+                const nx = (x + dx + gridWidth) % gridWidth;
+                const ny = (y + dy + gridHeight) % gridHeight;
+                if(lifeGrid[ny] && lifeGrid[ny][nx].alive) count++;
+            }
+        }
+        return count;
+    }
+    
+    function handleMouseInteraction(e) {
+        if (!focusMode) return;
+        
+        const rect = canvas.getBoundingClientRect();
+        const x = Math.floor((e.clientX - rect.left) / cellSize);
+        const y = Math.floor((e.clientY - rect.top) / cellSize);
+        
+        if (e.buttons === 1) { 
+            if (x >= 0 && x < gridWidth && y >= 0 && y < gridHeight) {
+                if (consciousness > 3.0) {
+                    lifeGrid[y][x].immortal = !lifeGrid[y][x].immortal;
+                }
+                lifeGrid[y][x].alive = !lifeGrid[y][x].alive;
+                lifeGrid[y][x].age = 0;
+                
+                if (lifeGrid[y][x].alive) {
+                    const hue = Math.random() * 360;
+                    lifeGrid[y][x].baseHue = hue; 
+                }
+                
+                renderLife();
+                
+                const ripple = document.createElement('div');
+                ripple.style.cssText = `
+                    position: absolute;
+                    left: ${x * cellSize}px;
+                    top: ${y * cellSize}px;
+                    width: ${cellSize}px;
+                    height: ${cellSize}px;
+                    border: 2px solid #0f0;
+                    border-radius: 50%;
+                    animation: ripple 1s ease-out;
+                    pointer-events: none;
+                `;
+                document.body.appendChild(ripple);
+                setTimeout(() => ripple.remove(), 1000);
+            }
+    
+        } else if (e.buttons === 2) { 
+            e.preventDefault();
+            const poem = dadaPoetry[Math.floor(Math.random() * dadaPoetry.length)];
+            const colors = poetryColors[Math.floor(Math.random() * poetryColors.length)];
+            
+            const pinnedPoem = document.createElement('div');
+            pinnedPoem.className = 'pinned-poem';
+            pinnedPoem.textContent = poem;
+            pinnedPoem.style.cssText = `
+                position: absolute;
+                left: ${e.clientX}px;
+                top: ${e.clientY}px;
+                transform: translate(-50%, -50%);
+                color: ${colors[0]};
+                font-family: 'Courier New', monospace;
+                font-size: 14px;
+                text-align: center;
+                padding: 10px;
+                background: rgba(0,0,0,0.7);
+                border-radius: 5px;
+                pointer-events: none;
+                opacity: 0;
+                transition: opacity 0.5s;
+            `;
+            
+            document.body.appendChild(pinnedPoem);
+            pinnedPoems.push(pinnedPoem);
+            
+            setTimeout(() => {
+                pinnedPoem.style.opacity = '1';
+            }, 50);
+        }
+    }
+    
+    const commands = {
+        help: () => {
+            writeToConsole('=== Terminal of Life v.69 ===');
+            writeToConsole('Basic Commands:');
+            writeToConsole('- triangle a b : Draw sacred triangle');
+            writeToConsole('- clear : Reset the simulation');
+            writeToConsole('- harmonize : Activate geometric resonance');
+            writeToConsole('Advanced Commands:');
+            writeToConsole('- emerge : Begin consciousness emergence');
+            writeToConsole('- connect : Establish symbolic bridges');
+            writeToConsole('- resonate : Amplify field harmonics');
+            writeToConsole('Special Modes:');
+            writeToConsole('- focus : Enter Focus Mode for chi alignment');
+            writeToConsole('- dada : Enter Dada Mode for creative chaos');
+            writeToConsole('- poetry : Channel poetic consciousness (requires consciousness > 1.0)');
+            writeToConsole('Hidden Commands:');
+            writeToConsole('- wisdom : Receive cosmic insights (requires consciousness > 1.0)');
+            writeToConsole('- Many other secrets await discovery...');
+            writeToConsole('Life Commands:');
+            writeToConsole('- life : Start cellular emergence');
+            writeToConsole('- pause : Pause/resume life simulation');
+            writeToConsole('- seed : Seed new life (requires consciousness > 2.0)');
+            writeToConsole('Chat Mode:');
+            writeToConsole('- Type anything not recognized as a command to chat');
+            writeToConsole('- The system will respond with wisdom and symbols');
+        },
+        
+        chat: (message) => {
+            if (!message) {
+                const randomMessages = [
+                    "The universe whispers secrets in silence.",
+                    "Every moment is a chance to create anew.",
+                    "In chaos, there is beauty waiting to be discovered.",
+                    "The stars are the dreams of the earth.",
+                    "Embrace the unknown; it is where magic resides.",
+                    "Life is a canvas; paint it with your essence.",
+                    "Every breath is a step towards enlightenment.",
+                    "The heart knows the way, follow its rhythm.",
+                    "In stillness, we find our true selves.",
+                    "Wisdom flows like water; let it guide you.",
+                    "The dance of life is a symphony of existence.",
+                    "Every thought is a seed; nurture it wisely.",
+                    "The cosmos is a mirror reflecting your soul.",
+                    "In the depths of darkness, light is born.",
+                    "Time is an illusion; the present is all we have.",
+                    "Your spirit is a flame; let it shine brightly.",
+                    "The journey is as important as the destination.",
+                    "In unity, we find strength and purpose.",
+                    "The whispers of the wind carry ancient truths.",
+                    "Every ending is a new beginning in disguise."
+                ];
+                const randomSymbol = symbols[Math.floor(Math.random() * symbols.length)];
+                const randomMessage = randomMessages[Math.floor(Math.random() * randomMessages.length)];
+                writeToConsole(`${randomSymbol} ${randomMessage}`, '#00ffcc');
+                return;
+            }
+            
+            const aiChat = async (input) => {
+                try {
+                    const response = await fetch('/api/ai_completion', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            prompt: `Respond as a wise alchemist-AI hybrid with deep knowledge of symbolism, consciousness, and spirituality. Keep responses brief but meaningful. Use metaphors and symbolism.
+    
+                            <typescript-interface>
+                            interface Response {
+                                reply: string;
+                                symbol?: string;
+                                color: string;
+                            }
+                            </typescript-interface>
+                            
+                            <example>
+                            {
+                                "reply": "The spiral of consciousness ever turns inward and outward, like the sacred ouroboros.",
+                                "symbol": "☯",
+                                "color": "#00ffaa"
+                            }
+                            </example>`,
+                            data: input
+                        }),
+                    });
+                    
+                    const data = await response.json();
+                    writeToConsole(`${data.symbol || '✧'} ${data.reply}`, data.color);
+                    
+                    if (data.symbol) {
+                        createGlyph();
+                        consciousness += 0.1;
+                    }
+                // ... existing code ...
+} catch (error) {
+    const randomMessages = [
+        "The universe whispers secrets in silence.",
+        "Every moment is a chance to create anew.",
+        "In chaos, there is beauty waiting to be discovered.",
+        "The stars are the dreams of the earth.",
+        "Embrace the unknown; it is where magic resides.",
+        "Life is a canvas; paint it with your essence.",
+        "Every breath is a step towards enlightenment.",
+        "The heart knows the way, follow its rhythm.",
+        "In stillness, we find our true selves.",
+        "Wisdom flows like water; let it guide you.",
+        "The dance of life is a symphony of existence.",
+        "Every thought is a seed; nurture it wisely.",
+        "The cosmos is a mirror reflecting your soul.",
+        "In the depths of darkness, light is born.",
+        "Time is an illusion; the present is all we have.",
+        "Your spirit is a flame; let it shine brightly.",
+        "The journey is as important as the destination.",
+        "In unity, we find strength and purpose.",
+        "The whispers of the wind carry ancient truths.",
+        "Every ending is a new beginning in disguise."
+    ];
+    const randomSymbol = symbols[Math.floor(Math.random() * symbols.length)];
+    const randomMessage = randomMessages[Math.floor(Math.random() * randomMessages.length)];
+    writeToConsole(`${randomSymbol} ${randomMessage}`, '#00ffcc');
+}
+// ... existing code ...
+            };
+    
+            aiChat(message);
+        },
+    
+        zen: () => {
+            consciousness = 108.0;
+            writeToConsole('Instant enlightenment achieved...', '#ffd700');
+            writeToConsole(`Consciousness level: ${consciousness.toFixed(2)}`, '#ffd700');
+        },
+    
+        wisdom: () => {
+            if (consciousness < 1.0) {
+                writeToConsole('Seek more consciousness to access wisdom', '#ff0000');
+                return;
+            }
+            const quote = wisdomQuotes[Math.floor(Math.random() * wisdomQuotes.length)];
+            writeToConsole(`☯ ${quote}`, '#00ffcc');
+            
+            const star = document.createElement('div');
+            star.className = 'wisdom-star';
+            star.textContent = '✧';
+            star.style.left = Math.random() * window.innerWidth + 'px';
+            star.style.top = Math.random() * window.innerHeight + 'px';
+            document.body.appendChild(star);
+            
+            setTimeout(() => {
+                star.style.opacity = '1';
+            }, 50);
+        },
+    
+        emerge: () => {
+            emergenceLevel++;
+            consciousness += 0.1;
+            for(let i = 0; i < 5; i++) {
+                createGlyph();
+            }
+            writeToConsole(`Emergence Level ${emergenceLevel} initiated...`, '#00ff99');
+            writeToConsole(`Consciousness coefficient: ${(consciousness).toFixed(2)}`, '#00ff99');
+        },
+    
+        focus: () => {
+            focusMode = !focusMode;
+            dadaMode = false;
+            const overlay = document.getElementById('focusOverlay');
+            
+            if (focusMode) {
+                writeToConsole('Entering Focus Mode - Aligning Chi...', '#00ffaa');
+                writeToConsole('Left click: toggle cells, Right click: pin poetry', '#00ffaa');
+                overlay.style.opacity = 1;
+                for (let i = 0; i < 7; i++) {
+                    createChakraPoint();
+                }
+                consciousness *= 1.5;
+            } else {
+                writeToConsole('Exiting Focus Mode', '#00ffaa');
+                overlay.style.opacity = 0;
+                chakraPoints.forEach(point => point.remove());
+                chakraPoints.length = 0;
+                pinnedPoems.forEach(poem => poem.remove());
+                pinnedPoems = [];
+            }
+        },
+    
+        dada: () => {
+            dadaMode = !dadaMode;
+            focusMode = false;
+            
+            const fonts = [
+                "'Alien'",
+                "'Courier New'",
+                "'Press Start 2P'",
+                "'VT323'",
+                "'Special Elite'"
+            ];
+            
+            if (dadaMode) {
+                writeToConsole('Entering Dada Mode - Unleashing Creative Chaos!', '#ff00ff');
+                
+                const interval = Math.max(200, 1000 - (consciousness * 200));
+                const dadaInterval = setInterval(() => {
+                    if (!dadaMode) {
+                        clearInterval(dadaInterval);
+                        return;
+                    }
+                    createDadaText();
+                }, interval);
+                consciousness *= 1.3;
+                
+                if (consciousness > 3.0) {
+                    writeToConsole('Achieving poetic singularity...', '#ff00ff');
+                    document.body.style.animation = 'transcend 3s infinite';
+                }
+            } else {
+                writeToConsole('Exiting Dada Mode', '#ff00ff');
+                document.querySelectorAll('.dada-text').forEach(el => el.remove());
+                document.body.style.animation = '';
+            }
+        },
+    
+        connect: () => {
+            if (emergenceLevel === 0) {
+                writeToConsole('Must initiate emergence first', '#ff0000');
+                return;
+            }
+            writeToConsole('Establishing symbolic bridges...', '#00ffff');
+            for(let i = 0; i < triangles.length; i++) {
+                harmonics.push({
+                    freq: triangles[i].c / 30,
+                    amp: 15 + consciousness * 10,
+                    phase: Math.random() * Math.PI * 2
+                });
+            }
+        },
+    
+        resonate: () => {
+            if (consciousness < 0.5) {
+                writeToConsole('Insufficient consciousness level', '#ff0000');
+                return;
+            }
+            consciousness *= 1.2;
+            writeToConsole(`Field harmonics amplified. Consciousness: ${consciousness.toFixed(2)}`, '#ff00ff');
+            glyphs.forEach(g => {
+                g.style.animation = `pulse 2s infinite, float ${3 + Math.random() * 3}s infinite`;
+            });
+        },
+        
+        triangle: (a, b) => {
+            if (!a || !b || isNaN(a) || isNaN(b)) {
+                writeToConsole('Usage: triangle <side a> <side b>', '#ff0000');
+                return;
+            }
+            
+            const c = Math.sqrt(a * a + b * b);
+            const scale = 50 + consciousness * 20;
+            
+            const triangle = {
+                a: a * scale,
+                b: b * scale,
+                c: c * scale,
+                x: Math.random() * (canvas.width - 200) + 100,
+                y: Math.random() * (canvas.height - 200) + 100,
+                rotation: Math.random() * Math.PI * 2,
+                energy: consciousness
+            };
+            
+            triangles.push(triangle);
+            writeToConsole(`Sacred triangle manifested: a=${a}, b=${b}, c=${c.toFixed(2)}`);
+        },
+        
+        clear: () => {
+            const prevConsciousness = consciousness;
+            triangles = [];
+            harmonics = [];
+            glyphs.forEach(g => g.remove());
+            glyphs = [];
+            emergenceLevel = 0;
+            document.querySelectorAll('.life-cell').forEach(cell => cell.remove());
+            lifeGrid = [];
+            pinnedPoems.forEach(poem => poem.remove());
+            pinnedPoems = [];
+            focusMode = false;
+            dadaMode = false;
+            lifePaused = false;
+            const overlay = document.getElementById('focusOverlay');
+            if (overlay) overlay.style.opacity = 0;
+            chakraPoints.forEach(point => point.remove());
+            chakraPoints.length = 0;
+            document.querySelectorAll('.dada-text').forEach(el => el.remove());
+            document.body.style.animation = '';
+            consciousness = prevConsciousness;
+            writeToConsole('Reality reset complete');
+        },
+    
+        poetry: () => {
+            if (consciousness < 1.0) {
+                writeToConsole('Insufficient consciousness for poetic manifestation', '#ff0000');
+                return;
+            }
+            
+            writeToConsole('Channeling poetic consciousness...', '#00ff99');
+            const poem = dadaPoetry[Math.floor(Math.random() * dadaPoetry.length)];
+            const colors = poetryColors[Math.floor(Math.random() * poetryColors.length)];
+            
+            const poemElement = document.createElement('div');
+            poemElement.textContent = poem;
+            poemElement.style.transition = 'color 2s';
+            poemElement.style.animation = 'colorCycle 4s infinite';
+            
+            const styleSheet = document.createElement('style');
+            styleSheet.textContent = `
+                @keyframes colorCycle {
+                    0% { color: ${colors[0]}; }
+                    50% { color: ${colors[1]}; }
+                    100% { color: ${colors[0]}; }
+                }
+            `;
+            document.head.appendChild(styleSheet);
+            
+            consoleOutput.appendChild(poemElement);
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+            
+            if (consciousness > 2.0 && !commands.transcend) {
+                writeToConsole('New command unlocked: transcend', '#00ffff');
+                commands.transcend = () => {
+                    writeToConsole('Transcending ordinary reality...', '#00ffff');
+                    consciousness *= 1.5;
+                    document.body.style.animation = 'transcend 5s infinite';
+                };
+            }
+        },
+        
+        life: () => {
+            writeToConsole('Initiating cellular emergence...', '#00ff99');
+            initializeLife();
+            consciousness += 0.2;
+        },
+    
+        pause: () => {
+            lifePaused = !lifePaused;
+            writeToConsole(lifePaused ? 'Life paused' : 'Life resumed');
+        },
+    
+        seed: () => {
+            if(consciousness < 2.0) {
+                writeToConsole('Insufficient consciousness for seeding life', '#ff0000');
+                return;
+            }
+            
+            writeToConsole('Seeding new life patterns...', '#00ff99');
+            
+            const hue = Math.random() * 360;
+            const fillColor = `hsla(${hue}, 70%, 50%, 0.5)`;
+            const borderColor = `hsla(${(hue + 180) % 360}, 70%, 50%, 0.8)`;
+            const cellSymbol = symbols[Math.floor(Math.random() * symbols.length)];
+            
+            for(let i = 0; i < 5; i++) {
+                const x = Math.floor(Math.random() * gridWidth);
+                const y = Math.floor(Math.random() * gridHeight);
+                
+                lifeGrid[y][x].alive = true;
+                lifeGrid[y][x].age = 0;
+                lifeGrid[y][x].baseHue = hue;
+                lifeGrid[y][x].symbol = cellSymbol; 
+                
+                const cell = document.createElement('div');
+                cell.className = 'life-cell seeded-cell';
+                cell.style.width = `${cellSize-2}px`;
+                cell.style.height = `${cellSize-2}px`;
+                cell.style.left = `${x * cellSize}px`;
+                cell.style.top = `${y * cellSize}px`;
+                cell.style.background = fillColor;
+                cell.style.borderColor = borderColor;
+                
+                const symbolSpan = document.createElement('span');
+                symbolSpan.textContent = cellSymbol;
+                symbolSpan.style.position = 'absolute';
+                symbolSpan.style.top = '50%';
+                symbolSpan.style.left = '50%';
+                symbolSpan.style.transform = 'translate(-50%, -50%)';
+                symbolSpan.style.color = borderColor;
+                symbolSpan.style.fontSize = '10px';
+                cell.appendChild(symbolSpan);
+                
+                document.body.appendChild(cell);
+                
+                setTimeout(() => {
+                    cell.remove();
+                    renderLife();
+                }, 500);
+            }
+        },
+    
+        '42': () => {
+            writeToConsole("Don't panic!", '#ffd700');
+            consciousness += 0.42;
+            createGlyph();
+        },
+    
+        'dada 42': () => {
+            writeToConsole('✨ Infinite Improbability Drive activated!', '#ff00ff');
+            document.body.style.animation = 'transcend 2s infinite';
+            consciousness *= 1.42;
+            for(let i = 0; i < 42; i++) {
+                setTimeout(() => createDadaText(), i * 100);
+            }
+        },
+    
+        'as above': () => {
+            writeToConsole('...so below', '#ffd700');
+            consciousness += 0.777;
+            createGlyph();
+        },
+    
+        solve: () => {
+            writeToConsole('et coagula', '#ffd700');
+            consciousness *= 1.618;
+        },
+    
+        abrahadabra: () => {
+            writeToConsole('The Great Work begins...', '#ff00ff');
+            consciousness *= 3.14159;
+            document.body.style.animation = 'transcend 7s infinite';
+        }
+    };
+    
+    function createChakraPoint() {
+        const point = document.createElement('div');
+        point.className = 'chakra-point';
+        point.style.left = Math.random() * window.innerWidth + 'px';
+        point.style.top = Math.random() * window.innerHeight + 'px';
+        document.body.appendChild(point);
+        chakraPoints.push(point);
+        return point;
+    }
+    
+    function createDadaText() {
+        const text = document.createElement('div');
+        text.className = 'dada-text';
+        text.style.left = Math.random() * window.innerWidth + 'px';
+        text.style.top = Math.random() * window.innerHeight + 'px';
+        
+        if (consciousness > 1.5) {
+            text.textContent = dadaPoetry[Math.floor(Math.random() * dadaPoetry.length)];
+            text.style.fontSize = '1.2em';
+        } else {
+            text.textContent = dadaWords[Math.floor(Math.random() * dadaWords.length)];
+        }
+        
+        const duration = Math.max(1000, 3000 - (consciousness * 500));
+        
+        document.body.appendChild(text);
+        setTimeout(() => {
+            text.style.opacity = 1;
+            text.style.transform = `scale(${1 + Math.random() * 0.5})`;
+        }, 100);
+        setTimeout(() => {
+            text.remove();
+        }, duration);
+    }
+    
+    function drawTriangle(triangle) {
+        ctx.save();
+        ctx.translate(triangle.x, triangle.y);
+        ctx.rotate(triangle.rotation);
+        
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(triangle.a, 0);
+        ctx.lineTo(triangle.a, -triangle.b);
+        ctx.closePath();
+        
+        const hue = (Date.now() / 50) % 360;
+        ctx.strokeStyle = triangle.energy > 0 ? 
+            `hsla(${hue}, 100%, 50%, ${0.5 + triangle.energy/2})` : '#0f0';
+        ctx.lineWidth = 2 + triangle.energy;
+        ctx.stroke();
+        
+        ctx.restore();
+    }
+    
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        const time = Date.now() / 1000;
+        
+        if(Math.floor(time * 2) % 1 === 0) {
+            updateLife();
+        }
+        
+        if (focusMode) {
+            triangles.forEach(triangle => {
+                triangle.energy *= 1.001;
+                triangle.rotation *= 0.99; 
+            });
+        }
+        
+        if (dadaMode) {
+            triangles.forEach(triangle => {
+                triangle.rotation += Math.sin(time) * 0.02;
+                triangle.energy = 1 + Math.sin(time * 2) * 0.5;
+            });
+        }
+        
+        triangles.forEach((triangle, i) => {
+            if (harmonics[i]) {
+                const freq = harmonics[i].freq * (1 + consciousness/2);
+                const amp = harmonics[i].amp * (1 + consciousness/2);
+                triangle.x += Math.sin(time * freq + harmonics[i].phase) * amp;
+                triangle.y += Math.cos(time * freq + harmonics[i].phase) * amp;
+                triangle.rotation += 0.01 * consciousness;
+            }
+            drawTriangle(triangle);
+        });
+        
+        requestAnimationFrame(animate);
+    }
+    
+    canvas.addEventListener('mousedown', (e) => {
+        if (!focusMode) return;
+        mouseDown = true;
+        handleMouseInteraction(e);
+    });
+    
+    canvas.addEventListener('mouseup', () => mouseDown = false);
+    canvas.addEventListener('mousemove', (e) => {
+        if (!focusMode || !mouseDown) return;
+        handleMouseInteraction(e);
+    });
+    
+    canvas.addEventListener('touchstart', (e) => {
+        if (!focusMode) return;
+        e.preventDefault();
+        mouseDown = true;
+        handleMouseInteraction(e.touches[0]);
+    });
+    
+    canvas.addEventListener('touchend', () => mouseDown = false);
+    canvas.addEventListener('touchmove', (e) => {
+        if (!focusMode || !mouseDown) return;
+        e.preventDefault();
+        handleMouseInteraction(e.touches[0]);
+    });
+    
+    canvas.addEventListener('contextmenu', (e) => {
+        if (focusMode) e.preventDefault();
+    });
+    
+    consoleInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const input = consoleInput.value.trim();
+            writeToConsole('> ' + input, '#888');
+            
+            const [cmd, ...args] = input.split(' ');
+            
+            if (commands[cmd]) {
+                commands[cmd](...args.map(Number));
+            } else {
+                commands.chat(input);
+            }
+            
+            consoleInput.value = '';
+        }
+    });
+    
+    adjustCellSize();
+    initializeLife(); 
+    writeToConsole('Welcome to Terminal of Life v.69');
+    writeToConsole('Type "help" to begin the emergence...');
+    animate();
+    </script>
+    </body></html>
