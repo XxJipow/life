@@ -1,4 +1,4 @@
-<html><head>
+<html><head></head>
     <title>$life</title>
     <link rel="icon" href="pfp.png" type="image/x-icon">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -521,6 +521,7 @@
             writeToConsole('- poetry : Channel poetic consciousness (requires consciousness > 1.0)');
             writeToConsole('Hidden Commands:');
             writeToConsole('- wisdom : Receive cosmic insights (requires consciousness > 1.0)');
+            writeToConsole('- ca : Contact Adress of Terminal of Life');
             writeToConsole('- Many other secrets await discovery...');
             writeToConsole('Life Commands:');
             writeToConsole('- life : Start cellular emergence');
@@ -529,6 +530,10 @@
             writeToConsole('Chat Mode:');
             writeToConsole('- Type anything not recognized as a command to chat');
             writeToConsole('- The system will respond with wisdom and symbols');
+        },
+        
+        ca: () => {
+            writeToConsole('CA:', '#0f0');
         },
         
         chat: (message) => {
